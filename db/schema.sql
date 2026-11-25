@@ -1,0 +1,106 @@
+-- ============================================================
+--  Artek Computers LLC – Database Schema
+--  Run via: npm run migrate
+-- ============================================================
+
+-- Users (admin accounts only – customers are not stored here)
+CREATE TABLE IF NOT EXISTS users (
+  id            SERIAL PRIMARY KEY,
+  name          VARCHAR(150)  NOT NULL,
+  email         VARCHAR(255)  NOT NULL UNIQUE,
+  password_hash TEXT          NOT NULL,
+  role          VARCHAR(20)   NOT NULL CHECK (role IN ('super_admin', 'admin')),
+  is_active     BOOLEAN       NOT NULL DEFAULT true,
+  created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+-- Product categories
+CREATE TABLE IF NOT EXISTS categories (
+  id          SERIAL PRIMARY KEY,
+  name        VARCHAR(150) NOT NULL,
+  slug        VARCHAR(150) NOT NULL UNIQUE,
+  description TEXT,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Product subcategories (belong to a category)
+CREATE TABLE IF NOT EXISTS subcategories (
+  id          SERIAL PRIMARY KEY,
+  category_id INTEGER      NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
+  name        VARCHAR(150) NOT NULL,
+  slug        VARCHAR(150) NOT NULL UNIQUE,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Brands
+CREATE TABLE IF NOT EXISTS brands (
+  id         SERIAL PRIMARY KEY,
+  name       VARCHAR(150) NOT NULL,
+  slug       VARCHAR(150) NOT NULL UNIQUE,
+  logo_path  TEXT,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Products
+CREATE TABLE IF NOT EXISTS products (
+  id             SERIAL PRIMARY KEY,
+  name           VARCHAR(255) NOT NULL,
+  slug           VARCHAR(255) NOT NULL UNIQUE,
+  model_number   VARCHAR(150) NOT NULL UNIQUE,
+  description    TEXT,
+  category_id    INTEGER      REFERENCES categories    (id) ON DELETE SET NULL,
+  subcategory_id INTEGER      REFERENCES subcategories (id) ON DELETE SET NULL,
+  brand_id       INTEGER      REFERENCES brands        (id) ON DELETE SET NULL,
+  availability   VARCHAR(20)  NOT NULL DEFAULT 'available'
+                              CHECK (availability IN ('available', 'out_of_stock', 'on_request')),
+  specifications JSONB,
+  is_active      BOOLEAN      NOT NULL DEFAULT true,
+  deleted_at     TIMESTAMPTZ  NULL,
+  created_by     INTEGER      REFERENCES users (id) ON DELETE SET NULL,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Product images
+CREATE TABLE IF NOT EXISTS product_images (
+  id         SERIAL PRIMARY KEY,
+  product_id INTEGER     NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+  file_name  VARCHAR(255) NOT NULL,
+  image_path TEXT         NOT NULL,
+  is_primary BOOLEAN      NOT NULL DEFAULT false,
+  sort_order INTEGER      NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+-- Quote requests submitted by site visitors
+CREATE TABLE IF NOT EXISTS quote_requests (
+  id           SERIAL PRIMARY KEY,
+  name         VARCHAR(150)  NOT NULL,
+  email        VARCHAR(255)  NOT NULL,
+  phone        VARCHAR(50),
+  company      VARCHAR(255),
+  message      TEXT,
+  product_id   INTEGER       REFERENCES products (id) ON DELETE SET NULL,
+  product_name VARCHAR(255),
+  model_number VARCHAR(150),
+  brand_name   VARCHAR(150),
+  email_sent   BOOLEAN       NOT NULL DEFAULT false,
+  status       VARCHAR(20)   NOT NULL DEFAULT 'new'
+                             CHECK (status IN ('new', 'contacted', 'closed')),
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+--  Indexes
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_categories_slug        ON categories    (slug);
+CREATE INDEX IF NOT EXISTS idx_subcategories_slug     ON subcategories (slug);
+CREATE INDEX IF NOT EXISTS idx_brands_slug            ON brands        (slug);
+
+CREATE INDEX IF NOT EXISTS idx_products_slug          ON products (slug);
+CREATE INDEX IF NOT EXISTS idx_products_model_number  ON products (model_number);
+CREATE INDEX IF NOT EXISTS idx_products_category_id   ON products (category_id);
+CREATE INDEX IF NOT EXISTS idx_products_subcategory_id ON products (subcategory_id);
+CREATE INDEX IF NOT EXISTS idx_products_brand_id      ON products (brand_id);
+CREATE INDEX IF NOT EXISTS idx_products_deleted_at    ON products (deleted_at);
