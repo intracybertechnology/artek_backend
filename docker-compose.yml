@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: artek_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: artek_user
+      POSTGRES_PASSWORD: artek_dev_password
+      POSTGRES_DB: artek
+    ports:
+           - "5434:5432"
+    volumes:
+      - artek_pgdata:/var/lib/postgresql/data
+
+volumes:
+  artek_pgdata:
