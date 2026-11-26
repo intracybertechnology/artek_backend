@@ -140,3 +140,30 @@ CREATE INDEX IF NOT EXISTS idx_posts_category      ON posts (category);
 CREATE INDEX IF NOT EXISTS idx_posts_status        ON posts (status);
 CREATE INDEX IF NOT EXISTS idx_posts_published_at  ON posts (published_at);
 CREATE INDEX IF NOT EXISTS idx_posts_deleted_at   ON posts (deleted_at);
+
+-- ============================================================
+--  Testimonials (client quotes shown in the site's testimonial section)
+-- ============================================================
+
+-- One row per published client quote. Rows are only ever soft-deleted
+-- (deleted_at set); image_path holds the public web path
+-- (/uploads/testimonials/<file>) served by express.static in app.js.
+CREATE TABLE IF NOT EXISTS testimonials (
+  id           SERIAL PRIMARY KEY,
+  name         VARCHAR(100) NOT NULL,
+  role         VARCHAR(100),
+  company      VARCHAR(150),
+  quote        TEXT         NOT NULL,
+  rating       SMALLINT     NULL CHECK (rating BETWEEN 1 AND 5),
+  image_path   TEXT         NULL,
+  is_published BOOLEAN      DEFAULT true,
+  sort_order   INT          DEFAULT 0,
+  created_by   INT          REFERENCES users (id),
+  deleted_at   TIMESTAMP    NULL,
+  created_at   TIMESTAMP    DEFAULT now(),
+  updated_at   TIMESTAMP    DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_testimonials_is_published ON testimonials (is_published);
+CREATE INDEX IF NOT EXISTS idx_testimonials_sort_order   ON testimonials (sort_order);
+CREATE INDEX IF NOT EXISTS idx_testimonials_deleted_at   ON testimonials (deleted_at);

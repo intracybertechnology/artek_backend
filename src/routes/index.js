@@ -11,6 +11,8 @@ const brandRoutes      = require("./brands.routes");
 const quoteRoutes      = require("./quotes.routes");
 const insightRoutes      = require("./insights.routes");
 const adminInsightRoutes = require("./admin-insights.routes");
+const testimonialRoutes      = require("./testimonials.routes");
+const adminTestimonialRoutes = require("./admin-testimonials.routes");
 
 const router = express.Router();
 
@@ -25,5 +27,7 @@ router.use("/brands",     brandRoutes);
 router.use("/quotes",     quoteRoutes);
 router.use("/insights", insightRoutes);
 router.use("/admin/insights", adminInsightRoutes);
+router.use("/testimonials", testimonialRoutes);
+router.use("/admin/testimonials", adminTestimonialRoutes);
 
 module.exports = router;

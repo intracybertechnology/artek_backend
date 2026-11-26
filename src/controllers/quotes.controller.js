@@ -43,10 +43,21 @@ const parseId = (value) => {
 // Public submission. Rate limited + validated in the routes file.
 const createQuote = async (req, res, next) => {
   try {
+    // 0. A missing or non-JSON body must be a clean 400, never a server
+    //    error (req.body is undefined when no JSON body was sent, and
+    //    reading req.body.x would then throw)
+    const body = req.body;
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body must be JSON",
+      });
+    }
+
     // 1. Honeypot – checked before anything else, so a bot always gets
     //    the normal success response and never learns what tripped it.
     //    Nothing is saved and no email is sent.
-    if (req.body.botcheck) {
+    if (body.botcheck) {
       return res.status(201).json({
         success: true,
         message: "Thank you, we will contact you shortly.",
@@ -62,20 +73,20 @@ const createQuote = async (req, res, next) => {
     // 3. Clean every text field: strip HTML tags, trim, empty -> null.
     //    (express-validator does not write sanitised values back into
     //    req.body, so the cleaning is done here.)
-    const name     = cleanText(req.body.fullName);
-    const email    = cleanText(req.body.email);
-    const phone    = cleanText(req.body.phone);
-    const company  = cleanText(req.body.companyName);
-    const service  = cleanText(req.body.service);
-    const emirate  = cleanText(req.body.emirate);
-    const category = cleanText(req.body.category);
-    const message  = cleanText(req.body.message);
+    const name     = cleanText(body.fullName);
+    const email    = cleanText(body.email);
+    const phone    = cleanText(body.phone);
+    const company  = cleanText(body.companyName);
+    const service  = cleanText(body.service);
+    const emirate  = cleanText(body.emirate);
+    const category = cleanText(body.category);
+    const message  = cleanText(body.message);
 
     // Client-supplied product context – used only when no valid
     // product_id was given (the database wins otherwise, see step 4)
-    let productName = cleanText(req.body.product_name);
-    let modelNumber = cleanText(req.body.model_number);
-    let brandName   = cleanText(req.body.brand_name);
+    let productName = cleanText(body.product_name);
+    let modelNumber = cleanText(body.model_number);
+    let brandName   = cleanText(body.brand_name);
 
     // Validation passed, but stripping tags may have emptied a field
     if (!name || !email || !phone || !message) {
@@ -89,8 +100,8 @@ const createQuote = async (req, res, next) => {
     //    product fields from the database instead of trusting the
     //    client. Soft-deleted products do not count as quotable.
     let productId = null;
-    if (req.body.product_id !== undefined && req.body.product_id !== null) {
-      productId = parseInt(req.body.product_id, 10);
+    if (body.product_id !== undefined && body.product_id !== null) {
+      productId = parseInt(body.product_id, 10);
       const product = await pool.query(
         `SELECT p.name, p.model_number, b.name AS brand_name
          FROM products p
