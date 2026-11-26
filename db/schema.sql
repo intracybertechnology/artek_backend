@@ -104,3 +104,39 @@ CREATE INDEX IF NOT EXISTS idx_products_category_id   ON products (category_id);
 CREATE INDEX IF NOT EXISTS idx_products_subcategory_id ON products (subcategory_id);
 CREATE INDEX IF NOT EXISTS idx_products_brand_id      ON products (brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_deleted_at    ON products (deleted_at);
+
+-- ============================================================
+--  Insights (blog) posts
+-- ============================================================
+
+-- Blog articles for the "Insights" section of the site.
+-- body and faqs are validated JSON arrays of typed blocks
+-- (see src/utils/postBlocks.js) – nothing is rendered on the server.
+CREATE TABLE IF NOT EXISTS posts (
+  id               SERIAL PRIMARY KEY,
+  slug             VARCHAR(255)  NOT NULL UNIQUE,
+  title            VARCHAR(255)  NOT NULL,
+  dek              TEXT,
+  category         VARCHAR(100)  NOT NULL,
+  tags             TEXT[]        DEFAULT '{}',
+  author_id        TEXT          DEFAULT 'artek-team',
+  published_at     DATE,
+  featured         BOOLEAN       DEFAULT false,
+  cover_word       VARCHAR(50),
+  body             JSONB         NOT NULL DEFAULT '[]',
+  faqs             JSONB         DEFAULT '[]',
+  related_services TEXT[]        DEFAULT '{}',
+  seo              JSONB,
+  status           VARCHAR(20)   NOT NULL DEFAULT 'draft'
+                                 CHECK (status IN ('draft', 'needs-review', 'published')),
+  created_by       INTEGER       REFERENCES users (id) ON DELETE SET NULL,
+  deleted_at       TIMESTAMPTZ   NULL,
+  created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_posts_slug          ON posts (slug);
+CREATE INDEX IF NOT EXISTS idx_posts_category      ON posts (category);
+CREATE INDEX IF NOT EXISTS idx_posts_status        ON posts (status);
+CREATE INDEX IF NOT EXISTS idx_posts_published_at  ON posts (published_at);
+CREATE INDEX IF NOT EXISTS idx_posts_deleted_at   ON posts (deleted_at);

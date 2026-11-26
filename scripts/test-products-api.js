@@ -103,7 +103,7 @@ const cleanup = async () => {
 
     // ── Login both roles ──────────────────────────────────────────────
     const login = await req("POST", "/api/auth/login", {
-      body: { email: "superadmin@artekcomputer.com", password: "superadmin@123" },
+    body: { email: process.env.SUPERADMIN_EMAIL, password: process.env.SUPERADMIN_PASSWORD },
     });
     const SA = login.cookie;                             // super admin cookie
     check("super admin login", login.status === 200 && !!SA);

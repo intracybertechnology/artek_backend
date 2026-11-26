@@ -9,6 +9,8 @@ const categoryRoutes   = require("./categories.routes");
 const subcategoryRoutes = require("./subcategories.routes");
 const brandRoutes      = require("./brands.routes");
 const quoteRoutes      = require("./quotes.routes");
+const insightRoutes      = require("./insights.routes");
+const adminInsightRoutes = require("./admin-insights.routes");
 
 const router = express.Router();
 
@@ -21,5 +23,7 @@ router.use("/categories", categoryRoutes);
 router.use("/subcategories", subcategoryRoutes);
 router.use("/brands",     brandRoutes);
 router.use("/quotes",     quoteRoutes);
+router.use("/insights", insightRoutes);
+router.use("/admin/insights", adminInsightRoutes);
 
 module.exports = router;
