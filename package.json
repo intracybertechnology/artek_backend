@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "migrate": "node db/migrate.js",
     "seed:admin": "node db/seed-superadmin.js",
-    "seed:catalog": "node db/seed-catalog.js"
+    "seed:catalog": "node db/seed-catalog.js",
+    "seed:products": "node db/seed-sample-products.js"
   },
   "repository": {
     "type": "git",
@@ -35,7 +36,8 @@
     "morgan": "^1.12.1",
     "multer": "^2.5.0",
     "nodemailer": "^10.6.1",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
