@@ -176,10 +176,43 @@ async function seedSampleProducts() {
   }
 }
 
+// ── One-time repair: link sample products to their subcategory ─────
+// For the sample products whose subcategory_id is still NULL, set it by
+// model number. Only rows with a NULL subcategory are touched, and only
+// when the subcategory belongs to the product's own category – so this
+// is safe to run many times and never touches other products.
+const subcategoryLinks = [
+  { model_number: "TL-SG1024D",     subcategory_slug: "network-switches" },
+  { model_number: "DS-2CD1043G0-I", subcategory_slug: "bullet-camera"   },
+];
+
+async function linkSampleSubcategories() {
+  for (const link of subcategoryLinks) {
+    const result = await pool.query(
+      `UPDATE products p
+       SET subcategory_id = s.id, updated_at = NOW()
+       FROM subcategories s
+       WHERE p.model_number = $1
+         AND p.subcategory_id IS NULL
+         AND s.slug = $2
+         AND s.category_id = p.category_id
+       RETURNING p.id`,
+      [link.model_number, link.subcategory_slug]
+    );
+
+    if (result.rows.length > 0) {
+      console.log(`✅  Product ${link.model_number} linked to subcategory "${link.subcategory_slug}"`);
+    } else {
+      console.log(`ℹ️   Product ${link.model_number} needs no subcategory link`);
+    }
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────
 async function main() {
   try {
     await seedSampleProducts();
+    await linkSampleSubcategories();
     console.log("✅  Sample products seed completed");
   } catch (err) {
     console.error("❌  Seed failed:", err.message);
