@@ -5,6 +5,7 @@ const authRoutes       = require("./auth.routes");
 const userRoutes       = require("./users.routes");
 const productRoutes    = require("./products.routes");
 const categoryRoutes   = require("./categories.routes");
+const subcategoryRoutes = require("./subcategories.routes");
 const brandRoutes      = require("./brands.routes");
 const quoteRoutes      = require("./quotes.routes");
 
@@ -15,6 +16,7 @@ router.use("/auth",       authRoutes);
 router.use("/users",      userRoutes);
 router.use("/products",   productRoutes);
 router.use("/categories", categoryRoutes);
+router.use("/subcategories", subcategoryRoutes);
 router.use("/brands",     brandRoutes);
 router.use("/quotes",     quoteRoutes);
 
