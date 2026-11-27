@@ -42,8 +42,8 @@ const listValidation = [
     .withMessage("Availability must be 'available', 'out_of_stock' or 'on_request'"),
   query("sort")
     .optional()
-    .isIn(["newest", "name"])
-    .withMessage("sort must be 'newest' or 'name'"),
+    .isIn(["newest", "name", "created_asc", "created_desc"])
+    .withMessage("sort must be 'newest', 'name', 'created_asc' or 'created_desc'"),
   query("deleted")
     .optional()
     .isIn(["true", "false"])

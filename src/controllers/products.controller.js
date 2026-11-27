@@ -116,6 +116,17 @@ const LIST_FROM = `
 // pagination behave identically. `options` decides visibility:
 //   includeInactive – do not filter out is_active = false rows (admin)
 //   includeDeleted  – do not filter out soft-deleted rows (admin + ?deleted=true)
+
+// Sort orders for the list endpoints. The SQL fragment is picked from
+// this fixed map, never built from user input. "newest" is kept as an
+// alias of created_desc for existing callers.
+const SORT_ORDERS = {
+  created_asc:  "p.created_at ASC, p.id ASC",     // oldest first (frontend grid default)
+  created_desc: "p.created_at DESC, p.id DESC",   // newest first
+  newest:       "p.created_at DESC, p.id DESC",
+  name:         "p.name ASC, p.id ASC",
+};
+
 const findProducts = async (req, options) => {
   const { category, subcategory, brand, search, availability, sort } = req.query;
 
@@ -162,9 +173,8 @@ const findProducts = async (req, options) => {
   const count = await pool.query(`SELECT COUNT(*)::int AS total ${LIST_FROM} ${where}`, values);
   const total = count.rows[0].total;
 
-  // Sort: "name" alphabetically, anything else newest first.
-  // The order string is picked from this fixed whitelist, never built from input.
-  const orderBy = sort === "name" ? "p.name ASC, p.id ASC" : "p.created_at DESC, p.id DESC";
+  // Sort: the fixed map above; anything unrecognised falls back to newest first
+  const orderBy = SORT_ORDERS[sort] || SORT_ORDERS.created_desc;
 
   values.push(limit);
   const limitPlaceholder = `$${values.length}`;
