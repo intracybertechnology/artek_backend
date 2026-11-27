@@ -11,7 +11,8 @@
     "seed:catalog": "node db/seed-catalog.js",
     "seed:products": "node db/seed-sample-products.js",
     "seed:insights": "node db/seed-insights.js",
-    "seed:testimonials": "node db/seed-testimonials.js"
+    "seed:testimonials": "node db/seed-testimonials.js",
+    "import:posts": "node db/import-posts.js"
   },
   "repository": {
     "type": "git",
