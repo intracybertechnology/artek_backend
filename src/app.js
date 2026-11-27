@@ -27,22 +27,41 @@ app.use(
 app.use(morgan("dev"));
 
 // ------------------------------------------------------------------
-// CORS – allow only the React frontend
+// CORS – allow only the configured frontend origin(s)
 // ------------------------------------------------------------------
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  "http://localhost:5173",
-];
+// CLIENT_URL may hold several origins separated by commas
+// (e.g. "https://artek.ae,https://www.artek.ae").
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+// http://localhost:5173 is a development convenience only
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:5173");
+}
+
+// Optional regex for extra origins (e.g. Vercel preview deployments):
+//   CORS_ORIGIN_REGEX=^https://artek-frontend-.*-intracyber-s-projects\.vercel\.app$
+let originRegex = null;
+if (process.env.CORS_ORIGIN_REGEX) {
+  try {
+    originRegex = new RegExp(process.env.CORS_ORIGIN_REGEX);
+  } catch (err) {
+    console.error(`⚠️  CORS_ORIGIN_REGEX is not a valid regular expression: ${err.message}`);
+  }
+}
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. curl, Postman) in development
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origin '${origin}' not allowed`));
-      }
+      // Requests with no origin (curl, Postman, health checks) are allowed
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (originRegex && originRegex.test(origin)) return callback(null, true);
+      // Not allowed: answer without CORS headers and never throw,
+      // so a foreign origin can never cause a server error
+      return callback(null, false);
     },
     credentials: true,
   })

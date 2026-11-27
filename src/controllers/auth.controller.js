@@ -10,12 +10,27 @@ const { validationResult } = require("express-validator");
 const pool   = require("../config/db");
 
 // ── Helper: build the httpOnly cookie options ─────────────────────
-const cookieOptions = () => ({
-  httpOnly: true,                                      // JS cannot read this cookie
-  sameSite: "lax",
-  secure:   process.env.NODE_ENV === "production",     // HTTPS only in production
-  maxAge:   24 * 60 * 60 * 1000,                       // 1 day in ms
-});
+const cookieOptions = () => {
+  // sameSite comes from COOKIE_SAMESITE (lax | strict | none), default lax
+  const requested  = (process.env.COOKIE_SAMESITE || "lax").toLowerCase();
+  const sameSite   = ["lax", "strict", "none"].includes(requested) ? requested : "lax";
+
+  // secure is always on in production, and forced on for sameSite "none"
+  // (browsers only accept SameSite=None together with Secure)
+  const secure = process.env.NODE_ENV === "production" || sameSite === "none";
+
+  const options = {
+    httpOnly: true,                                    // JS cannot read this cookie
+    sameSite,
+    secure,
+    maxAge:   24 * 60 * 60 * 1000,                     // 1 day in ms
+  };
+
+  // Optional cookie domain, e.g. ".example.com" to share it across subdomains
+  if (process.env.COOKIE_DOMAIN) options.domain = process.env.COOKIE_DOMAIN;
+
+  return options;
+};
 
 // ── POST /api/auth/login ──────────────────────────────────────────
 const login = async (req, res, next) => {
@@ -74,7 +89,12 @@ const login = async (req, res, next) => {
 
 // ── POST /api/auth/logout ─────────────────────────────────────────
 const logout = (req, res) => {
-  res.clearCookie("token", { httpOnly: true, sameSite: "lax" });
+  // Clear the cookie with the same attributes it was set with.
+  // maxAge is removed – with a Max-Age the browser would keep the
+  // (empty) cookie for a day instead of deleting it.
+  const options = cookieOptions();
+  delete options.maxAge;
+  res.clearCookie("token", options);
   return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
