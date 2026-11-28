@@ -4,9 +4,10 @@
  * Mounted at /api/admin/products
  *
  * Product management list + detail for the admin panel: inactive
- * products are included, and soft-deleted ones appear with ?deleted=true.
- * Every route needs authentication; both 'admin' and 'super_admin' may
- * use it. All other product routes live in products.routes.js.
+ * products are included, and soft-deleted ones appear with ?deleted=true
+ * (super_admin only). Every route needs authentication; both 'admin'
+ * and 'super_admin' may use it. All other product routes live in
+ * products.routes.js.
  */
 
 const express  = require("express");

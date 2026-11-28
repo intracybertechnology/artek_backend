@@ -5,10 +5,10 @@
  *
  * Public:   paginated product list (filters, search, sort) and product
  *           detail by slug – active, non-deleted products only.
- * Admin:    create / update / soft-delete / restore products, the admin
- *           list + detail (inactive and soft-deleted included) and all
- *           image management. Both 'admin' and 'super_admin' roles may
- *           use these – the guards live in the routes files.
+ * Admin:    create / update products, the admin list + detail and all
+ *           image management ('admin' and 'super_admin'); soft delete /
+ *           restore are super_admin only – the guards live in the
+ *           routes files.
  *
  * Images:   uploaded via POST /api/products/:id/images, resized with
  *           sharp (longest side max 1200 px, WebP quality 80) and stored
@@ -115,7 +115,7 @@ const LIST_FROM = `
 // Used by the public list and the admin list so filters, sorting and
 // pagination behave identically. `options` decides visibility:
 //   includeInactive – do not filter out is_active = false rows (admin)
-//   includeDeleted  – do not filter out soft-deleted rows (admin + ?deleted=true)
+//   includeDeleted  – do not filter out soft-deleted rows (super_admin + ?deleted=true)
 
 // Sort orders for the list endpoints. The SQL fragment is picked from
 // this fixed map, never built from user input. "newest" is kept as an
@@ -649,12 +649,12 @@ const restoreProduct = async (req, res, next) => {
 };
 
 // ══════════════════════════════════════════════════════════════════════
-//  Admin: list + detail (includes inactive and soft-deleted products)
+//  Admin: list + detail (inactive included; deleted for super_admin)
 // ══════════════════════════════════════════════════════════════════════
 
 // ── GET /api/admin/products ──────────────────────────────────────────
 // Same list as the public one, but inactive products are included and
-// soft-deleted ones appear with ?deleted=true.
+// soft-deleted ones appear with ?deleted=true (super_admin only).
 const listAdminProducts = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -662,9 +662,19 @@ const listAdminProducts = async (req, res, next) => {
       return res.status(422).json({ success: false, errors: errors.array() });
     }
 
+    const wantDeleted = req.query.deleted === "true";
+
+    // Deleted products are a super_admin concern only
+    if (wantDeleted && req.user.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to perform this action",
+      });
+    }
+
     const { rows, pagination } = await findProducts(req, {
       includeInactive: true,
-      includeDeleted:  req.query.deleted === "true",
+      includeDeleted:  wantDeleted,
     });
 
     return res.status(200).json({

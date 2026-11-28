@@ -6,7 +6,7 @@
  * Public:   visitors submit a "Get a quote" request. Submissions are
  *           rate limited, honeypot-protected and HTML-stripped (the
  *           guards live in the routes file).
- * Admin:    super_admin reads quotes and updates their status.
+ * Admin:    'admin' and 'super_admin' read quotes and update their status.
  *
  * Emails:   after saving, src/utils/mailer.js notifies QUOTE_TO_EMAIL
  *           (reply-to the customer). An unconfigured or failed email

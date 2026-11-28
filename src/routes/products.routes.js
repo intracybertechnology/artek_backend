@@ -4,9 +4,9 @@
  * Mounted at /api/products
  *
  * Public reads (active, non-deleted products only); admin writes for
- * products and their images. Both 'admin' and 'super_admin' may manage
- * products. The admin list + detail live in admin-products.routes.js
- * (mounted at /api/admin/products).
+ * products and their images (both 'admin' and 'super_admin'); soft
+ * delete and restore are super_admin only. The admin list + detail
+ * live in admin-products.routes.js (mounted at /api/admin/products).
  */
 
 const express  = require("express");
@@ -30,9 +30,9 @@ const { uploadImages }    = require("../middleware/productImageUpload");
 
 const router = express.Router();
 
-// Every write in this file needs authentication, and both
-// 'admin' and 'super_admin' may use it.
-const requireAdmin = [authenticate, authorize("admin", "super_admin")];
+// Guards
+const requireAdmin      = [authenticate, authorize("admin", "super_admin")];
+const requireSuperAdmin = [authenticate, authorize("super_admin")];
 
 // ── Validation helpers ───────────────────────────────────────────────
 
@@ -189,12 +189,6 @@ router.post("/", requireAdmin, createValidation, createProduct);
 // PATCH /api/products/:id
 router.patch("/:id", requireAdmin, updateValidation, updateProduct);
 
-// DELETE /api/products/:id  (soft delete)
-router.delete("/:id", requireAdmin, deleteProduct);
-
-// POST /api/products/:id/restore
-router.post("/:id/restore", requireAdmin, restoreProduct);
-
 // POST /api/products/:id/images – multipart upload (field name "images")
 router.post("/:id/images", requireAdmin, uploadImages, uploadProductImages);
 
@@ -207,5 +201,13 @@ router.patch("/:id/images/:imageId/primary", requireAdmin, setImagePrimary);
 
 // DELETE /api/products/:id/images/:imageId
 router.delete("/:id/images/:imageId", requireAdmin, deleteImage);
+
+// ── Super admin only ────────────────────────────────────────────────
+
+// DELETE /api/products/:id  (soft delete)
+router.delete("/:id", requireSuperAdmin, deleteProduct);
+
+// POST /api/products/:id/restore
+router.post("/:id/restore", requireSuperAdmin, restoreProduct);
 
 module.exports = router;

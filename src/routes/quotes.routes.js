@@ -4,7 +4,7 @@
  * Mounted at /api/quotes
  *
  * Public:   visitors submit a quote request (rate limited, honeypot).
- * Admin:    super_admin lists quotes, reads one, updates the status.
+ * Admin:    'admin' and 'super_admin' list quotes, read one, update the status.
  */
 
 const express       = require("express");
@@ -124,15 +124,15 @@ const updateStatusValidation = [
 // POST /api/quotes – submit a quote request (rate limited)
 router.post("/", quoteLimiter, createQuoteValidation, createQuote);
 
-// ── Super admin only ────────────────────────────────────────────────
+// ── Admin (admin or super_admin) ─────────────────────────────────────
 
 // GET /api/quotes – paginated list, ?status=new|contacted|closed
-router.get("/", authenticate, authorize("super_admin"), listValidation, listQuotes);
+router.get("/", authenticate, authorize("admin", "super_admin"), listValidation, listQuotes);
 
 // GET /api/quotes/:id – one quote
-router.get("/:id", authenticate, authorize("super_admin"), getQuoteById);
+router.get("/:id", authenticate, authorize("admin", "super_admin"), getQuoteById);
 
 // PATCH /api/quotes/:id – update the status only
-router.patch("/:id", authenticate, authorize("super_admin"), updateStatusValidation, updateQuoteStatus);
+router.patch("/:id", authenticate, authorize("admin", "super_admin"), updateStatusValidation, updateQuoteStatus);
 
 module.exports = router;
